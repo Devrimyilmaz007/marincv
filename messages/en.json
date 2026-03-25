@@ -1,0 +1,59 @@
+{
+  "nav": {
+    "candidates": "Candidates",
+    "employers": "Employers",
+    "jobs": "Jobs",
+    "about": "About",
+    "login": "Log In",
+    "register": "Sign Up — Free"
+  },
+  "hero": {
+    "badge": "Maritime Industry's #1 Resume Platform",
+    "title": "The Maritime Industry's",
+    "titleHighlight": "Verified Resume Network",
+    "subtitle": "End the spreadsheet chaos and email threads. Let shipowners filter certified crew in seconds; let seafarers reach global opportunities with verified profiles.",
+    "ctaCandidate": "Create CV",
+    "ctaCandidateSub": "For Seafarers",
+    "ctaEmployer": "Post a Job",
+    "ctaEmployerSub": "For Employers",
+    "statsSeafarers": "Registered Seafarers",
+    "statsEmployers": "Shipowners & Agencies",
+    "statsCountries": "Active Countries"
+  },
+  "features": {
+    "sectionLabel": "Why MarinCV?",
+    "sectionTitle": "Redefining Maritime HR",
+    "sectionSubtitle": "The only platform that truly understands GRT, kW, visa, and certification constraints.",
+    "filter": {
+      "title": "Advanced Filtering",
+      "description": "Find the right crew by GRT limit, kW capacity, STCW certificates, visa status and years of experience — in seconds."
+    },
+    "verified": {
+      "title": "Verified Profiles",
+      "description": "Every seafarer's document is verified, every profile is certified. No more fake CVs or outdated certificates."
+    },
+    "global": {
+      "title": "Global Job Listings",
+      "description": "From cargo vessels to luxury yachts, tankers to Ro-Ro ships — worldwide opportunities in one place."
+    }
+  },
+  "footer": {
+    "tagline": "The trusted HR platform for the maritime industry.",
+    "company": "Company",
+    "about": "About Us",
+    "blog": "Blog",
+    "careers": "Careers",
+    "press": "Press",
+    "product": "Product",
+    "forCandidates": "For Candidates",
+    "forEmployers": "For Employers",
+    "pricing": "Pricing",
+    "features": "Features",
+    "legal": "Legal",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy",
+    "contact": "Contact",
+    "copyright": "© 2024 MarinCV. All rights reserved."
+  }
+}

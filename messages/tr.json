@@ -1,0 +1,59 @@
+{
+  "nav": {
+    "candidates": "Adaylar",
+    "employers": "İşverenler",
+    "jobs": "İlanlar",
+    "about": "Hakkımızda",
+    "login": "Giriş Yap",
+    "register": "Kayıt Ol — Ücretsiz"
+  },
+  "hero": {
+    "badge": "Denizcilik Sektörünün #1 Özgeçmiş Platformu",
+    "title": "Denizcilik Sektörünün",
+    "titleHighlight": "Onaylı Özgeçmiş Ağı",
+    "subtitle": "Excel karmaşasına ve mail zincirine son. Armatörler belgelenmiş personeli saniyeler içinde filtrelesin; adaylar doğrulanmış profilleriyle global fırsatlara ulaşsın.",
+    "ctaCandidate": "CV Oluştur",
+    "ctaCandidateSub": "Adaylar İçin",
+    "ctaEmployer": "İlan Ver",
+    "ctaEmployerSub": "İşverenler İçin",
+    "statsSeafarers": "Kayıtlı Denizci",
+    "statsEmployers": "Armatör & Acente",
+    "statsCountries": "Aktif Ülke"
+  },
+  "features": {
+    "sectionLabel": "Neden MarinCV?",
+    "sectionTitle": "Denizcilik İK'sını Yeniden Tanımlıyoruz",
+    "sectionSubtitle": "GRT, kW, vize ve sertifika kısıtlamalarını anlayan tek platform.",
+    "filter": {
+      "title": "Gelişmiş Filtreleme",
+      "description": "GRT limiti, kW kapasitesi, STCW sertifikaları, vize durumu ve deneyim yılına göre saniyeler içinde aday bulun."
+    },
+    "verified": {
+      "title": "Onaylı Profiller",
+      "description": "Her denizci belgesi doğrulanmış, her profil sertifikalandırılmış. Sahte CV karmaşasına son."
+    },
+    "global": {
+      "title": "Global İş İlanları",
+      "description": "Kargo gemilerinden lüks yatlara, tankerlerden Ro-Ro gemilerine — tüm dünyadan ilanlar tek noktada."
+    }
+  },
+  "footer": {
+    "tagline": "Denizcilik sektörünün güvenilir İK platformu.",
+    "company": "Şirket",
+    "about": "Hakkımızda",
+    "blog": "Blog",
+    "careers": "Kariyer",
+    "press": "Basın",
+    "product": "Ürün",
+    "forCandidates": "Adaylar İçin",
+    "forEmployers": "İşverenler İçin",
+    "pricing": "Fiyatlandırma",
+    "features": "Özellikler",
+    "legal": "Yasal",
+    "privacy": "Gizlilik Politikası",
+    "terms": "Kullanım Koşulları",
+    "cookies": "Çerez Politikası",
+    "contact": "İletişim",
+    "copyright": "© 2024 MarinCV. Tüm hakları saklıdır."
+  }
+}

@@ -1,0 +1,41 @@
+---
+description: MarinCV proje standartları — i18n, tasarım dili ve kod kalitesi kuralları
+alwaysApply: true
+---
+
+# MarinCV Proje Anayasası
+
+## 1. Dil Desteği (i18n)
+Bu proje global bir SaaS'tır. Bileşenlere **asla doğrudan Türkçe/İngilizce sabit metin yazma**.
+Tüm UI metinleri `dictionaries/tr.json` ve `dictionaries/en.json` dosyalarından `getDictionary()` fonksiyonu aracılığıyla çekilmelidir.
+
+```ts
+// ❌ YANLIŞ
+<h1>Denizcilik İşe Alımında Yeni Standart</h1>
+
+// ✅ DOĞRU
+const dict = getDictionary(locale);
+<h1>{dict.hero.title}</h1>
+```
+
+## 2. Tasarım Dili
+Her zaman **Dark Mode + Glassmorphism** kullanan premium SaaS standartları:
+
+| Token | Değer |
+|---|---|
+| Ana arka plan | `bg-[#050B14]` |
+| Kart arka planı | `bg-[#0B1221]/80 backdrop-blur-xl` |
+| Vurgu (accent) | `#00D2FF` (turkuaz) |
+| Kenarlık | `border-white/10` veya `border-slate-700/60` |
+| Focus ring | `focus:ring-[#00D2FF]/20 focus:border-[#00D2FF]` |
+
+```tsx
+// ✅ Glassmorphism kart örneği
+<div className="bg-[#0B1221]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+```
+
+## 3. Kod Kalitesi
+- **Framework:** Next.js App Router — Server Component önce, `"use client"` sadece gerektiğinde
+- **Dil:** TypeScript strict — `any` yasak, tüm prop'lar interface ile tanımlanmalı
+- **Stil:** Tailwind CSS — inline `style={{}}` yerine Tailwind class'ları tercih edilmeli
+- **Modülerlik:** Yeniden kullanılabilir bileşenler `components/` altında, yardımcı fonksiyonlar `lib/` altında
