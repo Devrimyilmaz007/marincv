@@ -12,6 +12,7 @@ interface CandidateSnippet {
   id:             string;
   full_name:      string;
   seaman_book_no: string | null;
+  avatar_url:     string | null;
 }
 
 interface JobSnippet {
@@ -193,8 +194,18 @@ function AppRow({ app, onUpdate }: {
 
       {/* ── Candidate ───────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className={`shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${grad} flex items-center justify-center text-white font-bold text-xs shadow-md`}>
-          {initials}
+        <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden shadow-md">
+          {candidate?.avatar_url ? (
+            <img
+              src={candidate.avatar_url}
+              alt={candidate.full_name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className={`w-full h-full bg-gradient-to-br ${grad} flex items-center justify-center text-white font-bold text-xs`}>
+              {initials}
+            </div>
+          )}
         </div>
         <div className="min-w-0">
           {candidate ? (
@@ -337,7 +348,7 @@ export default function IncomingApplicationsPage() {
         status,
         created_at,
         job_postings ( id, title ),
-        profiles!candidate_id ( id, full_name, seaman_book_no )
+        profiles!candidate_id ( id, full_name, seaman_book_no, avatar_url )
       `)
       .order("created_at", { ascending: false });
 
