@@ -174,7 +174,7 @@ function SaveFeedback({ status, errorMsg }: { status: SaveStatus; errorMsg: stri
 
 /* ── Page ────────────────────────────────────────────────────────────────── */
 export default function DashboardPage() {
-  const { user, loading, dict } = useDashUser();
+  const { user, loading, dict, refreshUser } = useDashUser();
   const t = dict.dashboard;
 
   const [personal, setPersonal] = useState<PersonalInfo>({
@@ -202,11 +202,25 @@ export default function DashboardPage() {
   }, [user]);
 
   async function handleAvatarUpload(url: string) {
+    /* Optimistic UI güncelleme */
     setAvatarUrl(url);
     if (!user) return;
-    const supabase = createClient();
-    const column   = user.role === "employer" ? "logo_url" : "avatar_url";
-    await supabase.from("profiles").update({ [column]: url || null }).eq("id", user.id);
+
+    const supabase  = createClient();
+    const column    = user.role === "employer" ? "logo_url" : "avatar_url";
+    const { error } = await supabase
+      .from("profiles")
+      .update({ [column]: url || null })
+      .eq("id", user.id);
+
+    if (error) {
+      /* Hata varsa önceki değere geri dön */
+      setAvatarUrl(user.avatarUrl ?? "");
+      console.error("Profil fotoğrafı kaydedilemedi:", error.message);
+    } else {
+      /* Başarılıysa context'i DB'den tazele */
+      refreshUser();
+    }
   }
 
   function setField<K extends keyof PersonalInfo>(key: K, val: PersonalInfo[K]) {

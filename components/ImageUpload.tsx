@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Camera, Building2, Loader2, X } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
@@ -51,6 +51,15 @@ export default function ImageUpload({
   const [preview,  setPreview]      = useState<string | null>(currentUrl ?? null);
   const [loading,  setLoading]      = useState(false);
   const [error,    setError]        = useState<string | null>(null);
+
+  /* currentUrl prop dışarıdan değiştiğinde (örn. context yüklendikten sonra)
+     aktif bir yükleme yoksa preview'i güncelle */
+  useEffect(() => {
+    if (!loading) {
+      setPreview(currentUrl ?? null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUrl]);
 
   const isAvatar = variant === "avatar";
 

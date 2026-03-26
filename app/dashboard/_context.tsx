@@ -23,15 +23,17 @@ export interface DashUser {
 }
 
 interface DashUserCtx {
-  user:    DashUser | null;
-  loading: boolean;
-  locale:  Locale;
-  dict:    Dictionary;
+  user:        DashUser | null;
+  loading:     boolean;
+  locale:      Locale;
+  dict:        Dictionary;
+  refreshUser: () => void;
 }
 
 /* ── Context ─────────────────────────────────────────────────────────────── */
 const DashUserContext = createContext<DashUserCtx>({
   user: null, loading: true, locale: "tr", dict: trDict as Dictionary,
+  refreshUser: () => {},
 });
 
 export function useDashUser() {
@@ -47,8 +49,11 @@ function getInitials(name: string): string {
 export function DashUserProvider({ children, locale }: { children: React.ReactNode; locale: Locale }) {
   const dict = (locale === "en" ? enDict : trDict) as Dictionary;
 
-  const [user,    setUser]    = useState<DashUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user,       setUser]       = useState<DashUser | null>(null);
+  const [loading,    setLoading]    = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refreshUser = () => setRefreshKey((k) => k + 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,10 +105,10 @@ export function DashUserProvider({ children, locale }: { children: React.ReactNo
 
     load();
     return () => { cancelled = true; };
-  }, []);
+  }, [refreshKey]);
 
   return (
-    <DashUserContext.Provider value={{ user, loading, locale, dict }}>
+    <DashUserContext.Provider value={{ user, loading, locale, dict, refreshUser }}>
       {children}
     </DashUserContext.Provider>
   );
