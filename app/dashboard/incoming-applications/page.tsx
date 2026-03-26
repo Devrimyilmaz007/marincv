@@ -51,8 +51,6 @@ function useStatusMeta() {
   } as Record<AppStatus, { label: string; dot: string; bg: string; text: string; border: string }>;
 }
 
-const STATUS_META = STATUS_STYLE as unknown as Record<AppStatus, { label: string; dot: string; bg: string; text: string; border: string }>;
-
 const STATUS_ORDER: AppStatus[] = ["bekliyor", "incelendi", "onaylandi", "reddedildi"];
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
@@ -60,8 +58,9 @@ function fmtDate(d: string): string {
   return new Date(d).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
 }
 
-function getInitials(name: string): string {
-  return name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
+function getInitials(name: string | null | undefined): string {
+  if (!name) return "?";
+  return name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("") || "?";
 }
 
 /* ── Primitives ──────────────────────────────────────────────────────────── */
@@ -118,11 +117,11 @@ function Toast({ toast, onDismiss }: { toast: ToastMsg; onDismiss: () => void })
 /* ── Status Badge ────────────────────────────────────────────────────────── */
 function StatusBadge({ status }: { status: AppStatus }) {
   const meta = useStatusMeta();
-  const m = meta[status];
+  const m = meta[status] ?? STATUS_STYLE.bekliyor;
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${m.bg} ${m.text} ${m.border}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
-      {m.label}
+      {"label" in m ? (m as { label: string }).label : status}
     </span>
   );
 }
@@ -135,7 +134,7 @@ function StatusSelect({ appId, current, onUpdate }: {
 }) {
   const meta = useStatusMeta();
   const [saving, setSaving] = useState(false);
-  const m = meta[current];
+  const m = meta[current] ?? STATUS_STYLE.bekliyor;
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value as AppStatus;
@@ -179,7 +178,7 @@ function AppRow({ app, onUpdate }: {
 }) {
   const candidate = app.profiles;
   const job       = app.job_postings;
-  const initials  = candidate ? getInitials(candidate.full_name) : "?";
+  const initials  = getInitials(candidate?.full_name);
 
   /* Violet gradient for candidate avatars */
   const VIOLET_GRADIENTS = [
@@ -187,7 +186,7 @@ function AppRow({ app, onUpdate }: {
     "from-indigo-600 to-violet-500",
     "from-fuchsia-600 to-violet-500",
   ];
-  const grad = VIOLET_GRADIENTS[(candidate?.full_name.charCodeAt(0) ?? 0) % VIOLET_GRADIENTS.length];
+  const grad = VIOLET_GRADIENTS[(candidate?.full_name?.charCodeAt(0) ?? 0) % VIOLET_GRADIENTS.length];
 
   return (
     <div className="bg-[#0D1629] border border-slate-700/40 rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:border-violet-500/20 hover:bg-[#0F1835] transition-all duration-200 group">
@@ -283,6 +282,7 @@ function EmptyState() {
 
 /* ── Stats Bar ───────────────────────────────────────────────────────────── */
 function StatsBar({ apps }: { apps: Application[] }) {
+  const meta = useStatusMeta();
   const counts = STATUS_ORDER.reduce<Record<AppStatus, number>>((acc, s) => {
     acc[s] = apps.filter((a) => a.status === s).length;
     return acc;
@@ -291,7 +291,7 @@ function StatsBar({ apps }: { apps: Application[] }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       {STATUS_ORDER.map((s) => {
-        const m = STATUS_META[s];
+        const m = meta[s];
         return (
           <div key={s} className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${m.bg} ${m.border}`}>
             <span className={`w-2 h-2 rounded-full ${m.dot} shrink-0`} />
