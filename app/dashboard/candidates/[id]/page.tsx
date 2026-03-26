@@ -34,6 +34,7 @@ interface CandidateDetail {
   phone:          string | null;
   seaman_book_no: string | null;
   birth_date:     string | null;
+  avatar_url:     string | null;
   sea_service:    SeaService[];
   certificates:   Certificate[];
 }
@@ -228,8 +229,18 @@ function ProfileSidebar({ candidate, rank }: { candidate: CandidateDetail; rank:
 
         {/* Avatar + name */}
         <div className="flex flex-col items-center text-center gap-3">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-violet-600 to-purple-400 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-violet-500/20">
-            {initials}
+          <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg shadow-violet-500/20 shrink-0">
+            {candidate.avatar_url ? (
+              <img
+                src={candidate.avatar_url}
+                alt={`${candidate.full_name} profil fotoğrafı`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-tr from-violet-600 to-purple-400 flex items-center justify-center text-white font-black text-2xl">
+                {initials}
+              </div>
+            )}
           </div>
           <div>
             <h1 className="text-lg font-bold text-white leading-tight">{candidate.full_name}</h1>
@@ -497,7 +508,7 @@ export default function CandidateDetailPage() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, nationality, city, address, phone, seaman_book_no, birth_date, sea_service(*), certificates(*)")
+        .select("id, full_name, nationality, city, address, phone, seaman_book_no, birth_date, avatar_url, sea_service(*), certificates(*)")
         .eq("id", id)
         .single();
 
