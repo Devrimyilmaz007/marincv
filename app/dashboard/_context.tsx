@@ -19,6 +19,7 @@ export interface DashUser {
   nationality:  string;
   city:         string;
   address:      string;
+  avatarUrl:    string;
 }
 
 interface DashUserCtx {
@@ -68,7 +69,7 @@ export function DashUserProvider({ children, locale }: { children: React.ReactNo
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, role, phone, seaman_book_no, birth_date, nationality, city, address")
+        .select("full_name, role, phone, seaman_book_no, birth_date, nationality, city, address, avatar_url, logo_url")
         .eq("id", authUser.id)
         .maybeSingle();
 
@@ -91,6 +92,7 @@ export function DashUserProvider({ children, locale }: { children: React.ReactNo
           nationality:  profile?.nationality    ?? "Türkiye",
           city:         profile?.city           ?? "",
           address:      profile?.address        ?? "",
+          avatarUrl:    profile?.avatar_url ?? profile?.logo_url ?? "",
         });
         setLoading(false);
       }

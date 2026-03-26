@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { useDashUser } from "./_context";
+import ImageUpload from "@/components/ImageUpload";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 interface PersonalInfo {
@@ -185,6 +186,7 @@ export default function DashboardPage() {
   });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveError,  setSaveError]  = useState("");
+  const [avatarUrl,  setAvatarUrl]  = useState("");
 
   /* Supabase'den gelen verilerle formu doldur */
   useEffect(() => {
@@ -196,7 +198,16 @@ export default function DashboardPage() {
       city:        user.city,
       address:     user.address,
     });
+    setAvatarUrl(user.avatarUrl ?? "");
   }, [user]);
+
+  async function handleAvatarUpload(url: string) {
+    setAvatarUrl(url);
+    if (!user) return;
+    const supabase = createClient();
+    const column   = user.role === "employer" ? "logo_url" : "avatar_url";
+    await supabase.from("profiles").update({ [column]: url || null }).eq("id", user.id);
+  }
 
   function setField<K extends keyof PersonalInfo>(key: K, val: PersonalInfo[K]) {
     setPersonal((p) => ({ ...p, [key]: val }));
@@ -240,8 +251,16 @@ export default function DashboardPage() {
         <div className="bg-[#0B1221] border border-slate-700/40 rounded-2xl p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-[#00D2FF] flex items-center justify-center text-white font-black text-lg shrink-0">
-                {user?.initials ?? "?"}
+              <div className="shrink-0">
+                <ImageUpload
+                  currentUrl={avatarUrl || null}
+                  folder={user?.id ?? ""}
+                  onUpload={handleAvatarUpload}
+                  variant={user?.role === "employer" ? "logo" : "avatar"}
+                  placeholder={user?.initials ?? "?"}
+                  size="w-14 h-14"
+                  hideHint
+                />
               </div>
               <div>
                 <p className="text-xs text-slate-400 mb-0.5">{t.welcome} ⚓</p>
