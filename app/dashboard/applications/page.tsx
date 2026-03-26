@@ -10,8 +10,9 @@ import { typeGradient } from "@/lib/vessel-data";
 type AppStatus = "bekliyor" | "incelendi" | "onaylandi" | "reddedildi";
 
 interface EmployerSnippet {
-  full_name: string;
+  full_name: string | null;
   city:      string | null;
+  logo_url:  string | null;
 }
 
 interface JobSnippet {
@@ -79,8 +80,8 @@ function CardSkeleton() {
 }
 
 /* ── Status Badge ────────────────────────────────────────────────────────── */
-function StatusBadge({ status }: { status: AppStatus }) {
-  const m = STATUS_META[status];
+function StatusBadge({ status }: { status: string }) {
+  const m = STATUS_META[status as AppStatus] ?? STATUS_META.bekliyor;
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${m.bg} ${m.text} ${m.border}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} aria-hidden="true" />
@@ -119,6 +120,9 @@ function AppCard({ app }: { app: Application }) {
   const job      = app.job_postings;
   const employer = job?.profiles ?? null;
   const gradient = typeGradient(job?.vessel_type ?? "");
+  const initials = employer?.full_name
+    ? employer.full_name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("") || "?"
+    : "?";
 
   return (
     <div className="bg-[#0B1221]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-5 hover:border-white/20 hover:shadow-lg hover:shadow-black/20 transition-all duration-200">
@@ -126,12 +130,19 @@ function AppCard({ app }: { app: Application }) {
       {/* ── Top row: employer avatar + title + status ─────────────────── */}
       <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
         <div className="flex items-start gap-3 min-w-0">
-          {/* Employer avatar */}
-          <div
-            className={`shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-xs shadow-md`}
-            aria-hidden="true"
-          >
-            {employer ? employer.full_name.slice(0, 2).toUpperCase() : "?"}
+          {/* Employer logo or initials */}
+          <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden shadow-md">
+            {employer?.logo_url ? (
+              <img
+                src={employer.logo_url}
+                alt={employer.full_name ?? "Armatör"}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-xs`}>
+                {initials}
+              </div>
+            )}
           </div>
 
           <div className="min-w-0">
@@ -239,7 +250,7 @@ export default function ApplicationsPage() {
           id,
           title,
           vessel_type,
-          profiles!employer_id ( full_name, city )
+          profiles!employer_id ( full_name, city, logo_url )
         )
       `)
       .eq("candidate_id", user.id)
