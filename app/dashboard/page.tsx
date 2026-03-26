@@ -8,11 +8,18 @@ import ImageUpload from "@/components/ImageUpload";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 interface PersonalInfo {
+  /* Candidate-only */
   bookletNo:   string;
   birthDate:   string;
   nationality: string;
+  /* Shared */
   city:        string;
   address:     string;
+  /* Employer-only */
+  companyName: string;
+  taxOffice:   string;
+  taxNo:       string;
+  website:     string;
 }
 
 interface SeaRecord {
@@ -411,7 +418,7 @@ export default function DashboardPage() {
   const { user, loading, dict, refreshUser } = useDashUser();
   const t = dict.dashboard;
 
-  const [personal,   setPersonal]   = useState<PersonalInfo>({ bookletNo: "", birthDate: "", nationality: "Türkiye", city: "", address: "" });
+  const [personal,   setPersonal]   = useState<PersonalInfo>({ bookletNo: "", birthDate: "", nationality: "Türkiye", city: "", address: "", companyName: "", taxOffice: "", taxNo: "", website: "" });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveError,  setSaveError]  = useState("");
   const [avatarUrl,  setAvatarUrl]  = useState("");
@@ -422,17 +429,42 @@ export default function DashboardPage() {
   const [employerStats, setEmployerStats] = useState<EmployerStats | null>(null);
   const [dataLoading,   setDataLoading]   = useState(false);
 
-  /* Fill form from context */
+  /* Fill form from context + fetch employer-specific columns */
   useEffect(() => {
     if (!user) return;
-    setPersonal({
-      bookletNo:   user.seamanBookNo,
-      birthDate:   user.birthDate,
-      nationality: user.nationality || "Türkiye",
-      city:        user.city,
-      address:     user.address,
-    });
     setAvatarUrl(user.avatarUrl ?? "");
+
+    if (user.role === "employer") {
+      const supabase = createClient();
+      supabase
+        .from("profiles")
+        .select("full_name, city, address, tax_office, tax_no, website")
+        .eq("id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          setPersonal((p) => ({
+            ...p,
+            companyName: data?.full_name  ?? user.fullName ?? "",
+            city:        data?.city       ?? user.city     ?? "",
+            address:     data?.address    ?? user.address  ?? "",
+            taxOffice:   data?.tax_office ?? "",
+            taxNo:       data?.tax_no     ?? "",
+            website:     data?.website    ?? "",
+          }));
+        });
+    } else {
+      setPersonal({
+        bookletNo:   user.seamanBookNo,
+        birthDate:   user.birthDate,
+        nationality: user.nationality || "Türkiye",
+        city:        user.city,
+        address:     user.address,
+        companyName: "",
+        taxOffice:   "",
+        taxNo:       "",
+        website:     "",
+      });
+    }
   }, [user]);
 
   /* Fetch role-specific data */
@@ -495,13 +527,25 @@ export default function DashboardPage() {
     setSaveStatus("saving");
     setSaveError("");
     const supabase = createClient();
-    const { error } = await supabase.from("profiles").update({
-      seaman_book_no: personal.bookletNo  || null,
-      birth_date:     personal.birthDate  || null,
-      nationality:    personal.nationality || null,
-      city:           personal.city       || null,
-      address:        personal.address    || null,
-    }).eq("id", user.id);
+
+    const payload = user.role === "employer"
+      ? {
+          full_name:  personal.companyName || null,
+          city:       personal.city        || null,
+          address:    personal.address     || null,
+          tax_office: personal.taxOffice   || null,
+          tax_no:     personal.taxNo       || null,
+          website:    personal.website     || null,
+        }
+      : {
+          seaman_book_no: personal.bookletNo   || null,
+          birth_date:     personal.birthDate   || null,
+          nationality:    personal.nationality || null,
+          city:           personal.city        || null,
+          address:        personal.address     || null,
+        };
+
+    const { error } = await supabase.from("profiles").update(payload).eq("id", user.id);
 
     if (error) {
       setSaveError(error.message);
@@ -600,9 +644,11 @@ export default function DashboardPage() {
       {/* ── Two Column Layout ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-        {/* LEFT: Kişisel Bilgiler */}
+        {/* LEFT: Profil Formu — rol bazlı */}
         <div className="lg:col-span-3 bg-[#0B1221] border border-slate-700/40 rounded-2xl p-6">
-          <SectionTitle>{t.profile_heading}</SectionTitle>
+          <SectionTitle>
+            {user?.role === "employer" ? "Şirket Bilgileri" : t.profile_heading}
+          </SectionTitle>
 
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 animate-pulse">
@@ -612,7 +658,46 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+          ) : user?.role === "employer" ? (
+            /* ── Employer Form ── */
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="sm:col-span-2">
+                <FieldLabel>Şirket Adı</FieldLabel>
+                <DashInput value={personal.companyName} onChange={(v) => setField("companyName", v)} placeholder="Örn: Atlas Denizcilik A.Ş." />
+              </div>
+              <div>
+                <FieldLabel>Vergi Dairesi</FieldLabel>
+                <DashInput value={personal.taxOffice} onChange={(v) => setField("taxOffice", v)} placeholder="Kadıköy V.D." />
+              </div>
+              <div>
+                <FieldLabel>Vergi Numarası</FieldLabel>
+                <DashInput value={personal.taxNo} onChange={(v) => setField("taxNo", v)} placeholder="1234567890" />
+              </div>
+              <div className="sm:col-span-2">
+                <FieldLabel>Şirket Web Sitesi</FieldLabel>
+                <DashInput value={personal.website} onChange={(v) => setField("website", v)} placeholder="https://sirketiniz.com.tr" />
+              </div>
+              <div>
+                <FieldLabel>{t.city}</FieldLabel>
+                <DashInput value={personal.city} onChange={(v) => setField("city", v)} placeholder="İstanbul" />
+              </div>
+              <div className="sm:col-span-2">
+                <FieldLabel>Şirket Adresi</FieldLabel>
+                <DashInput value={personal.address} onChange={(v) => setField("address", v)} placeholder="Mahalle, Semt, Şehir" />
+              </div>
+              {user?.phone && (
+                <div className="sm:col-span-2">
+                  <FieldLabel>Kayıtlı Telefon</FieldLabel>
+                  <div className="flex items-center gap-2 w-full bg-[#0D1629] border border-slate-700/30 rounded-xl px-4 py-2.5 opacity-50">
+                    <svg className="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.75a.75.75 0 01.75.75v15a.75.75 0 01-.75.75h-9a.75.75 0 01-.75-.75v-15a.75.75 0 01.75-.75h9z" /></svg>
+                    <span className="text-sm text-slate-400">{user.phone}</span>
+                    <span className="ml-auto text-xs text-slate-600">Kayıt sırasında girildi</span>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
+            /* ── Candidate Form ── */
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <FieldLabel>{t.seaman_book}</FieldLabel>
