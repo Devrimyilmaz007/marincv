@@ -164,7 +164,7 @@ function AddModal({ onClose, onSave, saving }: { onClose: () => void; onSave: (f
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 id="modal-title" className="text-base font-bold text-white">{t.jobs_modal_title}</h2>
+            <h2 id="modal-title" className="text-base font-bold text-white">Yeni İlan Ekle</h2>
             <p className="text-xs text-slate-400 mt-0.5">İlan bilgilerini eksiksiz doldurun.</p>
           </div>
           <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors cursor-pointer p-1" aria-label="Kapat">
@@ -176,7 +176,7 @@ function AddModal({ onClose, onSave, saving }: { onClose: () => void; onSave: (f
 
           {/* Title */}
           <div>
-            <Label>{t.job_title}</Label>
+            <Label>İlan Başlığı</Label>
             <TextInput value={form.title} onChange={(v) => set("title", v)} placeholder="Acil Uzakyol Kaptanı Aranıyor" />
             {errors.title && <p className="mt-1 text-xs text-red-400">{errors.title}</p>}
           </div>
@@ -184,7 +184,7 @@ function AddModal({ onClose, onSave, saving }: { onClose: () => void; onSave: (f
           {/* Vessel + Rank */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label>{t.job_vessel}</Label>
+              <Label>İstenen Gemi Tipi</Label>
               <SelectInput value={form.vesselType} onChange={(v) => set("vesselType", v)}>
                 <option value="">— Tip seçin —</option>
                 {SHIP_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -192,7 +192,7 @@ function AddModal({ onClose, onSave, saving }: { onClose: () => void; onSave: (f
               {errors.vesselType && <p className="mt-1 text-xs text-red-400">{errors.vesselType}</p>}
             </div>
             <div>
-              <Label>{t.job_rank}</Label>
+              <Label>İstenen Rütbe</Label>
               <SelectInput value={form.rankReq} onChange={(v) => set("rankReq", v)}>
                 <option value="">— Rütbe seçin —</option>
                 {RANK_PRESETS.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -216,7 +216,7 @@ function AddModal({ onClose, onSave, saving }: { onClose: () => void; onSave: (f
               <NumberInput value={form.grtReq} onChange={(v) => set("grtReq", v)} placeholder="50000" />
             </div>
             <div>
-              <Label>{t.job_contract}</Label>
+              <Label>Kontrat Süresi</Label>
               <TextInput value={form.contractDuration} onChange={(v) => set("contractDuration", v)} placeholder="4+1 Ay" />
               {/* Quick picks */}
               <div className="flex flex-wrap gap-1.5 mt-2">
@@ -241,7 +241,7 @@ function AddModal({ onClose, onSave, saving }: { onClose: () => void; onSave: (f
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-2 mt-1 border-t border-slate-800">
             <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer">
-              {t.cancel}
+              İptal
             </button>
             <button
               type="submit" disabled={saving}
