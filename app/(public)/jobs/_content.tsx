@@ -9,7 +9,7 @@ import enDict from "@/dictionaries/en.json";
 import { SHIP_TYPES, RANK_PRESETS, typeGradient } from "@/lib/vessel-data";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
-interface EmployerSnippet { full_name: string; city?: string | null }
+interface EmployerSnippet { full_name: string; city?: string | null; logo_url?: string | null }
 interface JobPosting {
   id: string; employer_id: string; title: string; vessel_type: string;
   rank_req: string; grt_req: number | null; contract_duration: string;
@@ -73,8 +73,18 @@ function JobCard({ job, loginLabel }: { job: JobPosting; loginLabel: string }) {
   return (
     <div className="bg-[#0B1221]/80 backdrop-blur-sm border border-white/5 rounded-2xl p-6 hover:border-[#00D2FF]/20 hover:shadow-xl hover:shadow-[#00D2FF]/5 transition-all duration-300">
       <div className="flex items-start gap-3 mb-4 flex-wrap">
-        <div className={`shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-xs shadow-md`}>
-          {initials}
+        <div className={`shrink-0 w-10 h-10 rounded-xl overflow-hidden shadow-md`}>
+          {employer?.logo_url ? (
+            <img
+              src={employer.logo_url}
+              alt={employer.full_name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-xs`}>
+              {initials}
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-bold text-white leading-snug">{job.title}</h3>
@@ -131,7 +141,7 @@ export default function PublicJobsContent({ locale }: { locale: Locale }) {
       const supabase = createClient();
       const { data, error: err } = await supabase
         .from("job_postings")
-        .select("*, profiles!employer_id(full_name, city)")
+        .select("*, profiles!employer_id(full_name, city, logo_url)")
         .eq("status", "active")
         .order("created_at", { ascending: false });
       if (err) setError(t.load_error);
