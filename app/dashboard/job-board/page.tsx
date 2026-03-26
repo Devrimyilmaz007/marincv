@@ -9,6 +9,7 @@ import { SHIP_TYPES, RANK_PRESETS, typeGradient } from "@/lib/vessel-data";
 interface EmployerSnippet {
   full_name: string;
   city:      string | null;
+  logo_url:  string | null;
 }
 
 interface JobPosting {
@@ -182,8 +183,18 @@ function JobCard({ job, userId, appliedIds, onToast }: {
       <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
         <div className="flex items-start gap-3 min-w-0">
           {/* Employer avatar */}
-          <div className={`shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-xs shadow-md`}>
-            {initials}
+          <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden shadow-md">
+            {employer?.logo_url ? (
+              <img
+                src={employer.logo_url}
+                alt={employer.full_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-xs`}>
+                {initials}
+              </div>
+            )}
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-bold text-white leading-snug">{job.title}</h3>
@@ -369,7 +380,7 @@ export default function JobBoardPage() {
     /* Active job postings with employer snippet */
     const { data: jobData, error: jobErr } = await supabase
       .from("job_postings")
-      .select("*, profiles!employer_id(full_name, city)")
+      .select("*, profiles!employer_id(full_name, city, logo_url)")
       .eq("status", "active")
       .order("created_at", { ascending: false });
 
