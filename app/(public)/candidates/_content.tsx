@@ -10,8 +10,9 @@ import { SHIP_TYPES, RANK_PRESETS, typeGradient } from "@/lib/vessel-data";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 interface SeaService {
-  grt:       number | null;
-  ship_type: string;
+  rank:          string;
+  grt:           number | null;
+  ship_type:     string;
   sign_on_date:  string;
   sign_off_date: string | null;
 }
@@ -64,9 +65,6 @@ function topShipTypes(services: SeaService[]): string[] {
   return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([t]) => t);
 }
 
-function highestGrt(services: SeaService[]): number {
-  return services.reduce((max, s) => Math.max(max, s.grt ?? 0), 0);
-}
 
 function stcwStatus(certs: Certificate[]): "full" | "partial" | "none" {
   const now = new Date();
@@ -74,6 +72,31 @@ function stcwStatus(certs: Certificate[]): "full" | "partial" | "none" {
   if (valid.length === 0) return "none";
   const hasCore = valid.some((c) => c.name.toLowerCase().includes("stcw"));
   return hasCore ? "full" : "partial";
+}
+
+function latestRankFromServices(services: Array<SeaService & { rank?: string }>): string | null {
+  if (!services.length) return null;
+  const sorted = [...services].sort((a, b) => new Date(b.sign_on_date).getTime() - new Date(a.sign_on_date).getTime());
+  return sorted[0].rank ?? null;
+}
+
+/* Mock availability — deterministic from id so it stays consistent */
+const AVAILABILITY = [
+  { label: "Hemen Katılabilir", dotCls: "bg-emerald-400", textCls: "text-emerald-400" },
+  { label: "30 Gün İçinde",     dotCls: "bg-amber-400",   textCls: "text-amber-400"   },
+  { label: "60 Gün İçinde",     dotCls: "bg-sky-400",     textCls: "text-sky-400"     },
+];
+
+function mockAvailability(id: string) {
+  return AVAILABILITY[(id.charCodeAt(0) + id.charCodeAt(id.length - 1)) % AVAILABILITY.length];
+}
+
+function validCertNames(certs: Certificate[]): string[] {
+  const now = new Date();
+  return certs
+    .filter((c) => !c.expiry_date || new Date(c.expiry_date) > now)
+    .map((c) => c.name.length > 22 ? c.name.slice(0, 20) + "…" : c.name)
+    .slice(0, 3);
 }
 
 /* ── Skeleton ────────────────────────────────────────────────────────────── */
@@ -101,11 +124,18 @@ function CandidateCard({ candidate, t, shipTypeMap }: {
   t: typeof trDict.candidates_page;
   shipTypeMap: Record<string, string>;
 }) {
-  const months   = totalServiceMonths(candidate.sea_service);
-  const types    = topShipTypes(candidate.sea_service);
-  const grt      = highestGrt(candidate.sea_service);
-  const stcw     = stcwStatus(candidate.certificates);
-  const masked   = maskName(candidate.full_name);
+  const months    = totalServiceMonths(candidate.sea_service);
+  const types     = topShipTypes(candidate.sea_service);
+  const stcw      = stcwStatus(candidate.certificates);
+  const masked    = maskName(candidate.full_name);
+  const rank      = latestRankFromServices(candidate.sea_service) ?? "Rütbe Belirtilmemiş";
+  const avail     = mockAvailability(candidate.id);
+  const certTags  = validCertNames(candidate.certificates);
+
+  /* Experience label: "5 Yıl · Tanker / Dökme Yük" */
+  const expLabel = months > 0
+    ? `${fmtDuration(months)}${types.length > 0 ? " · " + types.slice(0, 2).map((t) => shipTypeMap[t] ?? t).join(" / ") : ""}`
+    : null;
 
   const stcwBadge = {
     full:    { label: t.stcw_full,    bg: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" },
@@ -116,16 +146,12 @@ function CandidateCard({ candidate, t, shipTypeMap }: {
   return (
     <div className="bg-[#0B1221]/80 backdrop-blur-sm border border-white/5 rounded-2xl p-5 flex flex-col gap-4 hover:border-[#00D2FF]/15 hover:shadow-lg hover:shadow-[#00D2FF]/5 transition-all duration-300">
 
-      {/* Avatar + masked identity */}
-      <div className="flex items-center gap-3">
-        {/* Avatar: real photo or blurred silhouette */}
-        <div className="shrink-0 w-12 h-12 rounded-xl overflow-hidden relative">
+      {/* ── Header: Avatar + Rank (title) + STCW badge ─────────────── */}
+      <div className="flex items-start gap-3">
+        {/* Avatar */}
+        <div className="shrink-0 w-12 h-12 rounded-xl overflow-hidden relative mt-0.5">
           {candidate.avatar_url ? (
-            <img
-              src={candidate.avatar_url}
-              alt="Aday fotoğrafı"
-              className="w-full h-full object-cover"
-            />
+            <img src={candidate.avatar_url} alt="Aday fotoğrafı" className="w-full h-full object-cover" />
           ) : (
             <>
               <div className="absolute inset-0 bg-gradient-to-br from-slate-600 to-slate-800" />
@@ -138,15 +164,18 @@ function CandidateCard({ candidate, t, shipTypeMap }: {
           )}
         </div>
 
+        {/* Title hierarchy */}
         <div className="flex-1 min-w-0">
-          {/* Masked name */}
-          <p className="text-sm font-bold text-white">{masked}</p>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {candidate.nationality ?? "Uyruk belirtilmemiş"}
+          {/* Primary: Rank — most prominent */}
+          <p className="text-sm font-bold text-white leading-snug truncate">{rank}</p>
+          {/* Secondary: masked name + nationality */}
+          <p className="text-xs text-slate-400 mt-0.5 truncate">
+            {masked}
+            {candidate.nationality ? <span className="text-slate-600"> · {candidate.nationality}</span> : null}
           </p>
         </div>
 
-        {/* STCW badge */}
+        {/* STCW badge — stays top-right */}
         <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg border ${stcwBadge.bg}`}>
           {stcwBadge.label}
         </span>
@@ -154,36 +183,49 @@ function CandidateCard({ candidate, t, shipTypeMap }: {
 
       <div className="h-px bg-white/5" />
 
-      {/* Stats row */}
-      <div className="flex flex-wrap gap-3 text-xs">
-        {months > 0 && (
-          <div className="flex items-center gap-1.5 text-slate-300">
-            <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span className="font-semibold text-white">{fmtDuration(months)}</span>
-            <span className="text-slate-500">{t.sea_service}</span>
+      {/* ── Mid: Experience + Availability ─────────────────────────── */}
+      <div className="flex flex-col gap-2">
+        {/* Experience row */}
+        {expLabel ? (
+          <div className="flex items-center gap-2">
+            <svg className="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+            <span className="text-xs text-slate-300">{expLabel}</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <svg className="w-3.5 h-3.5 text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+            <span className="text-xs text-slate-600 italic">Deniz hizmeti girilmemiş</span>
           </div>
         )}
-        {grt > 0 && (
-          <div className="flex items-center gap-1.5 text-slate-300">
-            <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zm9.75-9.75c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v16.5c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V3.375zm-9.75 9.75" /></svg>
-            <span className="font-semibold text-white">{grt.toLocaleString("tr-TR")}</span>
-            <span className="text-slate-500">GRT</span>
-          </div>
-        )}
+
+        {/* Availability row */}
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full shrink-0 ${avail.dotCls} ring-2 ring-current ring-offset-1 ring-offset-[#0B1221] opacity-80`} />
+          <span className={`text-xs font-medium ${avail.textCls}`}>{avail.label}</span>
+        </div>
       </div>
 
-      {/* Ship type badges */}
-      {types.length > 0 && (
+      {/* ── Tags: ship types + cert pills ──────────────────────────── */}
+      {(types.length > 0 || certTags.length > 0) && (
         <div className="flex flex-wrap gap-1.5">
           {types.map((type) => (
             <span key={type} className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium text-white bg-gradient-to-r ${typeGradient(type)}`}>
               {shipTypeMap[type] ?? type}
             </span>
           ))}
+          {certTags.map((name) => (
+            <span key={name} className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium text-slate-300 bg-slate-800/70 border border-slate-700/50">
+              {name}
+            </span>
+          ))}
         </div>
       )}
 
-      {/* CTA */}
+      {/* ── CTA — unchanged ────────────────────────────────────────── */}
       <Link
         href="/register"
         className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-200"
@@ -214,7 +256,7 @@ export default function PublicCandidatesContent({ locale }: { locale: Locale }) 
       const supabase = createClient();
       const { data, error: err } = await supabase
         .from("profiles")
-        .select("id, full_name, nationality, avatar_url, sea_service(*), certificates(*)")
+        .select("id, full_name, nationality, avatar_url, sea_service(rank, grt, ship_type, sign_on_date, sign_off_date), certificates(name, expiry_date)")
         .eq("role", "candidate")
         .order("id");
 
